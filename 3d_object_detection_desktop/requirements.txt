@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pymongo
+jinja2
+aiofiles
+python-multipart
+python-dotenv
+torch
+torchvision
+numpy
+opencv-python
+Pillow
+deepface
+ultralytics

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Detection History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Detection History</h1>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/history" method="get" class="row g-3 align-items-center">
+      <div class="col-md-4">
+        <label for="search" class="col-form-label">Filter by object:</label>
+        <input list="object-names-list" name="search" id="search" class="form-control" value="{{ search_term or '' }}" placeholder="e.g. person, car">
+        <datalist id="object-names-list">
+          {% for name in all_object_names %}
+            <option value="{{ name }}">
+          {% endfor %}
+        </datalist>
+      </div>
+      <div class="col-md-8 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/history" class="btn btn-secondary ms-2">Clear Filter</a>
+        <button type="button" id="clear-history-btn" class="btn btn-danger ms-auto">Clear All History</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{% if records %}
+<div class="table-responsive">
+  <table class="table table-striped table-hover align-middle">
+    <thead>
+      <tr>
+        <th style="width: 15%;">Preview</th>
+        <th style="width: 25%;">Filename</th>
+        <th style="width: 30%;">Detected Objects</th>
+        <th style="width: 10%;">Poses</th>
+        <th style="width: 20%;">Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>
+          <a href="/uploads/{{ record.result_filename }}" target="_blank">
+            <img src="/uploads/{{ record.result_filename }}" alt="{{ record.filename }}" class="img-fluid rounded" style="max-height: 100px;">
+          </a>
+        </td>
+        <td style="word-break: break-all;">{{ record.filename }}</td>
+        <td>
+          {% if record.detected_objects %}
+            <ul class="list-unstyled mb-0">
+            {% for obj in record.detected_objects|sort(attribute='score', reverse=true) %}
+              <li>
+                <span class="badge me-2" style="background-color: {{obj.color or '#6c757d'}};">&nbsp;</span>
+                {{ obj.class_name }} ({{ "%.0f"|format(obj.score * 100) }}%)
+                {% if obj.verified %}
+                  <span title="Verified" style="color: #28a745;">✓</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+            </ul>
+          {% else %}
+            <span class="text-muted">N/A</span>
+          {% endif %}
+        </td>
+        <td>{{ record.poses|length if record.poses is defined else 'N/A' }}</td>
+        <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} UTC</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info" role="alert">
+  {% if search_term %}
+    No results found for "<strong>{{ search_term }}</strong>".
+  {% else %}
+    No detection history found.
+  {% endif %}
+</div>
+{% endif %}
+
+<a href="/" class="btn btn-primary mt-3">Upload New Image</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clearBtn = document.getElementById('clear-history-btn');
+    if(clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete all detection history? This action cannot be undone and will also delete all associated image files.')) {
+                fetch('/history/clear', { 
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(`Successfully deleted ${data.deleted_count} records and ${data.deleted_files} files.`);
+                        window.location.reload();
+                    } else {
+                        alert('Error clearing history: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error clearing history:', err);
+                    alert('An error occurred while trying to clear the history.');
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

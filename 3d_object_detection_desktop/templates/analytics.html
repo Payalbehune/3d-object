@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Detection Analytics{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Detection Analytics</h1>
+
+{% if analytics %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+        <div class="card-body">
+            <canvas id="analyticsChart"></canvas>
+        </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Detection Counts</h4>
+            <table class="table table-striped">
+            <thead>
+                <tr>
+                <th>Object</th>
+                <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in analytics %}
+                <tr>
+                <td>{{ item._id }}</td>
+                <td>{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info" role="alert">
+  No analytics data available. Process some images to see analytics.
+</div>
+{% endif %}
+
+<a href="/" class="btn btn-primary mt-4">Upload New Image</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const analyticsData = {{ analytics|tojson|safe }};
+    if (analyticsData && analyticsData.length > 0) {
+      const labels = analyticsData.map(item => item._id);
+      const data = analyticsData.map(item => item.count);
+
+      const ctx = document.getElementById('analyticsChart').getContext('2d');
+      
+      const chartColors = {
+          primary: 'rgba(0, 170, 255, 0.6)',
+          primaryHover: 'rgba(0, 170, 255, 0.8)',
+          grid: 'rgba(255, 255, 255, 0.1)',
+          text: 'rgba(255, 255, 255, 0.8)'
+      };
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Detection Count',
+            data: data,
+            backgroundColor: chartColors.primary,
+            borderColor: chartColors.primaryHover,
+            borderWidth: 1,
+            hoverBackgroundColor: chartColors.primaryHover
+          }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: chartColors.text, font: { family: 'Poppins' } },
+                    grid: { color: chartColors.grid }
+                },
+                x: {
+                    ticks: { color: chartColors.text, font: { family: 'Poppins' } },
+                    grid: { display: false }
+                }
+            }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

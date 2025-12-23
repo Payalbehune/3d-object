@@ -1,0 +1,29 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.upload-zone {
+  border: 2px dashed #007bff;
+  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.upload-zone.dragover {
+  border-color: #0056b3;
+  background-color: #e9ecef;
+}
+
+.result-img {
+  max-width: 100%;
+  height: auto;
+  border-top-left-radius: calc(0.25rem - 1px);
+  border-top-right-radius: calc(0.25rem - 1px);
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
